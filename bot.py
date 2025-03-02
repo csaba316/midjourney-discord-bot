@@ -5,7 +5,7 @@ import asyncio
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import threading
-from waitress import serve  # Use a production WSGI server
+from waitress import serve  # Use production WSGI server
 
 # Load environment variables
 TOKEN = os.getenv("DISCORD_BOT_TOKEN")
@@ -44,15 +44,14 @@ async def send_midjourney_prompt(prompt):
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}})
 
-@app.before_request
-def handle_cors_preflight():
+@app.route('/send-prompt', methods=['OPTIONS'])
+def cors_preflight():
     """Handles CORS preflight OPTIONS requests"""
-    if request.method == "OPTIONS":
-        response = jsonify({"message": "CORS preflight success"})
-        response.headers.add("Access-Control-Allow-Origin", "*")
-        response.headers.add("Access-Control-Allow-Methods", "POST, OPTIONS")
-        response.headers.add("Access-Control-Allow-Headers", "Content-Type")
-        return response, 200
+    response = jsonify({"message": "CORS preflight success"})
+    response.headers.add("Access-Control-Allow-Origin", "*")
+    response.headers.add("Access-Control-Allow-Methods", "POST, OPTIONS")
+    response.headers.add("Access-Control-Allow-Headers", "Content-Type")
+    return response, 200
 
 @app.route('/send-prompt', methods=['POST'])
 def handle_prompt():
@@ -68,12 +67,12 @@ def handle_prompt():
     asyncio.run_coroutine_threadsafe(send_midjourney_prompt(prompt), client.loop)
 
     response = jsonify({"message": "Prompt sent to MidJourney!"})
-    response.headers.add("Access-Control-Allow-Origin", "*")
+    response.headers.add("Access-Control-Allow-Origin", "*")  # Explicitly allow all origins
     return response
 
 # Run Flask using Waitress (Production WSGI Server)
 def run_api():
-    print("🚀 Starting Flask API with Waitress...")
+    print("🚀 Starting Flask API with Waitress on port 5000...")
     serve(app, host="0.0.0.0", port=5000)
 
 # Run the API in a separate thread
