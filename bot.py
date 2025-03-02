@@ -25,19 +25,27 @@ intents.messages = True
 intents.message_content = True
 
 # Initialize bot
-client = discord.Client(intents=intents)
-
+bot = commands.Bot(command_prefix="!", intents=intents)
+@bot.event
+async def on_ready():
+    print(f'✅ Logged in as {bot.user}')
+    print("Listening for MidJourney prompts...")
 @client.event
 async def on_ready():
     print(f'✅ Logged in as {client.user}')
     print("Listening for MidJourney messages and prompts...")
 
-# Function to send `/imagine` command to MidJourney
+# Function to send `/imagine` command properly
 async def send_midjourney_prompt(prompt):
-    channel = client.get_channel(MIDJOURNEY_CHANNEL_ID)
+    channel = bot.get_channel(MIDJOURNEY_CHANNEL_ID)
     if channel:
         print(f"📩 Sending MidJourney prompt: {prompt}")
-        await channel.send(f"/imagine {prompt}")
+
+        # Send interaction request to MidJourney
+        try:
+            await channel.send(f"/imagine prompt: {prompt}")
+        except Exception as e:
+            print(f"❌ Error sending MidJourney command: {e}")
     else:
         print("❌ Error: MidJourney channel not found!")
 
