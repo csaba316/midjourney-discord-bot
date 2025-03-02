@@ -32,10 +32,6 @@ async def on_ready():
     print(f'✅ Logged in as {client.user}')
     print("Listening for MidJourney messages and prompts...")
 
-@app.before_request
-def log_request_info():
-    print(f"🔍 Incoming request: {request.method} {request.path}")
-
 # Function to send `/imagine` command to MidJourney
 async def send_midjourney_prompt(prompt):
     channel = client.get_channel(MIDJOURNEY_CHANNEL_ID)
@@ -61,7 +57,9 @@ def cors_preflight():
     response.headers.add("Access-Control-Allow-Methods", "POST, OPTIONS")
     response.headers.add("Access-Control-Allow-Headers", "Content-Type")
     return response, 200
-
+@app.before_request
+def log_request_info():
+    print(f"🔍 Incoming request: {request.method} {request.path}")
 @app.route('/send-prompt', methods=['POST'])
 def handle_prompt():
     data = request.json
