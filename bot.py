@@ -80,6 +80,18 @@ def run_api():
 def health_check():
     return jsonify({"status": "Flask API is running"}), 200
 
+def print_routes():
+    print("🔍 Registered Flask Routes:")
+    for rule in app.url_map.iter_rules():
+        print(f"➡️ {rule}")
+
+@client.event
+async def on_ready():
+    print(f'✅ Logged in as {client.user}')
+    print("Listening for MidJourney messages and prompts...")
+    print_routes()  # Print routes when bot starts
+
+
 # Run the API in a separate thread
 api_thread = threading.Thread(target=run_api, daemon=True)
 api_thread.start()
