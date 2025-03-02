@@ -52,7 +52,15 @@ async def on_message(message):
 
 # Flask API to receive prompts from Elementor and send to MidJourney
 app = Flask(__name__)
-CORS(app)  # Enable CORS to allow Elementor requests
+CORS(app, resources={r"/*": {"origins": "*"}})  # Allow CORS for all routes
+
+@app.route('/send-prompt', methods=['OPTIONS'])
+def preflight():
+    response = jsonify({'message': 'CORS preflight success'})
+    response.headers.add("Access-Control-Allow-Origin", "*")
+    response.headers.add("Access-Control-Allow-Methods", "POST, OPTIONS")
+    response.headers.add("Access-Control-Allow-Headers", "Content-Type")
+    return response
 
 @app.route('/send-prompt', methods=['POST'])
 def handle_prompt():
@@ -67,7 +75,9 @@ def handle_prompt():
     # Use asyncio to send the command from the bot
     asyncio.run_coroutine_threadsafe(send_midjourney_prompt(prompt), client.loop)
 
-    return jsonify({"message": "Prompt sent to MidJourney!"}), 200
+    response = jsonify({"message": "Prompt sent to MidJourney!"})
+    response.headers.add("Access-Control-Allow-Origin", "*")  # Explicitly allow all origins
+    return response
 
 # Run the Flask API in a separate thread
 def run_api():
