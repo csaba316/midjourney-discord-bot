@@ -12,10 +12,12 @@ TOKEN = os.getenv("DISCORD_BOT_TOKEN")
 MIDJOURNEY_CHANNEL_ID = int(os.getenv("MIDJOURNEY_CHANNEL_ID"))
 APPLICATION_ID = os.getenv("DISCORD_APPLICATION_ID")  # MidJourney App ID
 
-# Set up bot
+# Set up bot intents
 intents = discord.Intents.default()
 intents.messages = True
 intents.message_content = True
+
+# Initialize bot
 bot = discord.Client(intents=intents)
 
 @bot.event
@@ -25,7 +27,9 @@ async def on_ready():
 
 # Flask API Setup
 app = Flask(__name__)
-CORS(app, resources={r"/*": {"origins": "*"}})  # 🔥 Allow CORS for all routes
+
+# ✅ Allow all origins, methods, and headers
+CORS(app, resources={r"/*": {"origins": "*"}}, supports_credentials=True)
 
 @app.before_request
 def log_request_info():
@@ -42,11 +46,12 @@ def cors_preflight():
     response = jsonify({"message": "CORS preflight success"})
     response.headers.add("Access-Control-Allow-Origin", "*")
     response.headers.add("Access-Control-Allow-Methods", "POST, OPTIONS")
-    response.headers.add("Access-Control-Allow-Headers", "Content-Type")
+    response.headers.add("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With")
     return response, 200
 
 @app.route('/send-prompt', methods=['POST'])
 def handle_prompt():
+    """Receives the prompt from Elementor and triggers MidJourney"""
     data = request.json
     prompt = data.get("prompt")
 
