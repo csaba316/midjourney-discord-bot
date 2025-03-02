@@ -32,6 +32,10 @@ async def on_ready():
     print(f'✅ Logged in as {client.user}')
     print("Listening for MidJourney messages and prompts...")
 
+@app.before_request
+def log_request_info():
+    print(f"🔍 Incoming request: {request.method} {request.path}")
+
 # Function to send `/imagine` command to MidJourney
 async def send_midjourney_prompt(prompt):
     channel = client.get_channel(MIDJOURNEY_CHANNEL_ID)
