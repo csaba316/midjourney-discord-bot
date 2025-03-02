@@ -3,13 +3,20 @@ import requests
 import os
 import asyncio
 from flask import Flask, request, jsonify
-from flask_cors import CORS  # Import CORS
+from flask_cors import CORS
 import threading
+from waitress import serve  # Use a production WSGI server
 
 # Load environment variables
 TOKEN = os.getenv("DISCORD_BOT_TOKEN")
-MIDJOURNEY_CHANNEL_ID = int(os.getenv("MIDJOURNEY_CHANNEL_ID"))
 NODE_SERVER_URL = os.getenv("NODE_SERVER_URL")
+
+# Ensure the channel ID is valid
+channel_id_str = os.getenv("MIDJOURNEY_CHANNEL_ID")
+if not channel_id_str or not channel_id_str.isdigit():
+    raise ValueError(f"❌ Invalid MIDJOURNEY_CHANNEL_ID: {channel_id_str}")
+
+MIDJOURNEY_CHANNEL_ID = int(channel_id_str)  # Convert to integer safely
 
 # Set up bot intents
 intents = discord.Intents.default()
@@ -33,34 +40,19 @@ async def send_midjourney_prompt(prompt):
     else:
         print("❌ Error: MidJourney channel not found!")
 
-# Detect MidJourney-generated images and forward to Node.js API
-@client.event
-async def on_message(message):
-    if message.author.bot and message.attachments:  # Detect MidJourney bot messages
-        image_url = message.attachments[0].url
-        print(f"🎨 MidJourney Image Detected: {image_url}")
-
-        # Send image URL to Node.js API
-        try:
-            response = requests.post(f"{NODE_SERVER_URL}/receive-image", json={"image_url": image_url})
-            if response.status_code == 200:
-                print("✅ Image URL sent to Node.js API:", image_url)
-            else:
-                print(f"❌ Failed to send image. API response: {response.text}")
-        except Exception as e:
-            print("❌ Error sending image to API:", e)
-
-# Flask API to receive prompts from Elementor and send to MidJourney
+# Flask API for Elementor to send prompts
 app = Flask(__name__)
-CORS(app, resources={r"/*": {"origins": "*"}})  # Allow CORS for all routes
+CORS(app, resources={r"/*": {"origins": "*"}})
 
-@app.route('/send-prompt', methods=['OPTIONS'])
-def preflight():
-    response = jsonify({'message': 'CORS preflight success'})
-    response.headers.add("Access-Control-Allow-Origin", "*")
-    response.headers.add("Access-Control-Allow-Methods", "POST, OPTIONS")
-    response.headers.add("Access-Control-Allow-Headers", "Content-Type")
-    return response
+@app.before_request
+def handle_cors_preflight():
+    """Handles CORS preflight OPTIONS requests"""
+    if request.method == "OPTIONS":
+        response = jsonify({"message": "CORS preflight success"})
+        response.headers.add("Access-Control-Allow-Origin", "*")
+        response.headers.add("Access-Control-Allow-Methods", "POST, OPTIONS")
+        response.headers.add("Access-Control-Allow-Headers", "Content-Type")
+        return response, 200
 
 @app.route('/send-prompt', methods=['POST'])
 def handle_prompt():
@@ -76,14 +68,16 @@ def handle_prompt():
     asyncio.run_coroutine_threadsafe(send_midjourney_prompt(prompt), client.loop)
 
     response = jsonify({"message": "Prompt sent to MidJourney!"})
-    response.headers.add("Access-Control-Allow-Origin", "*")  # Explicitly allow all origins
+    response.headers.add("Access-Control-Allow-Origin", "*")
     return response
 
-# Run the Flask API in a separate thread
+# Run Flask using Waitress (Production WSGI Server)
 def run_api():
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    print("🚀 Starting Flask API with Waitress...")
+    serve(app, host="0.0.0.0", port=5000)
 
-api_thread = threading.Thread(target=run_api)
+# Run the API in a separate thread
+api_thread = threading.Thread(target=run_api, daemon=True)
 api_thread.start()
 
 # Start bot
