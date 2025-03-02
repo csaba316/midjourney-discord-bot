@@ -3,17 +3,18 @@ import requests
 import os
 import asyncio
 from flask import Flask, request, jsonify
+from flask_cors import CORS  # Import CORS
 import threading
 
-# Load environment variables (set these in Railway)
-TOKEN = os.getenv("DISCORD_BOT_TOKEN")  # Discord bot token
-MIDJOURNEY_CHANNEL_ID = int(os.getenv("MIDJOURNEY_CHANNEL_ID"))  # MidJourney channel ID
-NODE_SERVER_URL = os.getenv("NODE_SERVER_URL")  # Your Node.js API for Elementor
+# Load environment variables
+TOKEN = os.getenv("DISCORD_BOT_TOKEN")
+MIDJOURNEY_CHANNEL_ID = int(os.getenv("MIDJOURNEY_CHANNEL_ID"))
+NODE_SERVER_URL = os.getenv("NODE_SERVER_URL")
 
 # Set up bot intents
 intents = discord.Intents.default()
-intents.messages = True  # Required to listen for messages
-intents.message_content = True  # Required to read messages
+intents.messages = True
+intents.message_content = True
 
 # Initialize bot
 client = discord.Client(intents=intents)
@@ -51,6 +52,7 @@ async def on_message(message):
 
 # Flask API to receive prompts from Elementor and send to MidJourney
 app = Flask(__name__)
+CORS(app)  # Enable CORS to allow Elementor requests
 
 @app.route('/send-prompt', methods=['POST'])
 def handle_prompt():
@@ -69,7 +71,7 @@ def handle_prompt():
 
 # Run the Flask API in a separate thread
 def run_api():
-    app.run(host="0.0.0.0", port=5000)
+    app.run(host="0.0.0.0", port=5000, debug=True)
 
 api_thread = threading.Thread(target=run_api)
 api_thread.start()
