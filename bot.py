@@ -73,7 +73,7 @@ def handle_prompt():
 # Run Flask using Waitress (Production WSGI Server)
 def run_api():
     print("🚀 Starting Flask API with Waitress on port 5000...")
-    serve(app, host="0.0.0.0", port=5000)
+    serve(app, host="0.0.0.0", port=int(os.getenv("PORT", 5000)))
 
 @app.route('/health', methods=['GET'])
 def health_check():
