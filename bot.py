@@ -75,6 +75,10 @@ def run_api():
     print("🚀 Starting Flask API with Waitress on port 5000...")
     serve(app, host="0.0.0.0", port=5000)
 
+@app.route('/health', methods=['GET'])
+def health_check():
+    return jsonify({"status": "Flask API is running"}), 200
+
 # Run the API in a separate thread
 api_thread = threading.Thread(target=run_api, daemon=True)
 api_thread.start()
