@@ -1,2 +1,4 @@
 discord
 requests
+flask
+flask_cors
