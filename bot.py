@@ -6,6 +6,7 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 import threading
 from waitress import serve
+from discord.ext import commands
 import socket  # Added for port binding test
 
 # Load environment variables
