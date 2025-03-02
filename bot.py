@@ -67,6 +67,7 @@ def run_api():
     print(f"🚀 Starting Flask API with Waitress on port {port}...")
     serve(app, host="0.0.0.0", port=port, threads=4)
 
+
 # Run the API in a separate thread
 api_thread = threading.Thread(target=run_api, daemon=True)
 api_thread.start()
