@@ -82,16 +82,19 @@ def run_api():
     port = int(os.getenv("PORT", 5000))  # Use Railway's assigned port or default to 5000
     print(f"🚀 Starting Flask API with Waitress on port {port}...")
 
-    # Check if port is reachable
+    # Debug: Check if the correct port is open
+    import socket
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     try:
-        s.bind(("0.0.0.0", port))
+        s.bind(("0.0.0.0", port))  # Bind to all interfaces
         print(f"✅ Port {port} is available and listening.")
     except Exception as e:
         print(f"❌ Error binding to port {port}: {e}")
     s.close()
 
-    serve(app, host="0.0.0.0", port=port)
+    # 🔥 Force Flask to accept external connections
+    serve(app, host="0.0.0.0", port=port, threads=4)
+
 
 # Run the API in a separate thread
 api_thread = threading.Thread(target=run_api, daemon=True)
