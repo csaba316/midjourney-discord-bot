@@ -60,6 +60,8 @@ def cors_preflight():
 @app.before_request
 def log_request_info():
     print(f"🔍 Incoming request: {request.method} {request.path}")
+    print(f"🔎 Headers: {dict(request.headers)}")
+    print(f"🔎 Query Params: {dict(request.args)}")
 @app.route('/send-prompt', methods=['POST'])
 def handle_prompt():
     data = request.json
