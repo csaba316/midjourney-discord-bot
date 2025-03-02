@@ -5,7 +5,8 @@ import asyncio
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import threading
-from waitress import serve  # Use production WSGI server
+from waitress import serve
+import socket  # Added for port binding test
 
 # Load environment variables
 TOKEN = os.getenv("DISCORD_BOT_TOKEN")
@@ -44,6 +45,10 @@ async def send_midjourney_prompt(prompt):
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}})
 
+@app.route('/health', methods=['GET'])
+def health_check():
+    return jsonify({"status": "Flask API is running"}), 200
+
 @app.route('/send-prompt', methods=['OPTIONS'])
 def cors_preflight():
     """Handles CORS preflight OPTIONS requests"""
@@ -72,25 +77,19 @@ def handle_prompt():
 
 # Run Flask using Waitress (Production WSGI Server)
 def run_api():
-    port = int(os.getenv("PORT", 5000))  # Default to 5000 if no port is set
+    port = int(os.getenv("PORT", 5000))  # Use Railway's assigned port or default to 5000
     print(f"🚀 Starting Flask API with Waitress on port {port}...")
+
+    # Check if port is reachable
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    try:
+        s.bind(("0.0.0.0", port))
+        print(f"✅ Port {port} is available and listening.")
+    except Exception as e:
+        print(f"❌ Error binding to port {port}: {e}")
+    s.close()
+
     serve(app, host="0.0.0.0", port=port)
-
-@app.route('/health', methods=['GET'])
-def health_check():
-    return jsonify({"status": "Flask API is running"}), 200
-
-def print_routes():
-    print("🔍 Registered Flask Routes:")
-    for rule in app.url_map.iter_rules():
-        print(f"➡️ {rule}")
-
-@client.event
-async def on_ready():
-    print(f'✅ Logged in as {client.user}')
-    print("Listening for MidJourney messages and prompts...")
-    print_routes()  # Print routes when bot starts
-
 
 # Run the API in a separate thread
 api_thread = threading.Thread(target=run_api, daemon=True)
