@@ -31,10 +31,6 @@ bot = commands.Bot(command_prefix="!", intents=intents)
 async def on_ready():
     print(f'✅ Logged in as {bot.user}')
     print("Listening for MidJourney prompts...")
-@client.event
-async def on_ready():
-    print(f'✅ Logged in as {client.user}')
-    print("Listening for MidJourney messages and prompts...")
 
 # Function to send `/imagine` command properly
 async def send_midjourney_prompt(prompt):
@@ -82,7 +78,7 @@ def handle_prompt():
     print(f"📩 Received prompt from Elementor: {prompt}")
 
     # Use asyncio to send the command from the bot
-    asyncio.run_coroutine_threadsafe(send_midjourney_prompt(prompt), client.loop)
+    asyncio.run_coroutine_threadsafe(send_midjourney_prompt(prompt), bot.loop)
 
     response = jsonify({"message": "Prompt sent to MidJourney!"})
     response.headers.add("Access-Control-Allow-Origin", "*")  # Explicitly allow all origins
@@ -112,4 +108,4 @@ api_thread = threading.Thread(target=run_api, daemon=True)
 api_thread.start()
 
 # Start bot
-client.run(TOKEN)
+bot.run(TOKEN)
